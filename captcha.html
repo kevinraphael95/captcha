@@ -1,435 +1,1481 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vérification Humaine</title>
+<title>reCAPTCHA — Human Verification</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 
 <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Arial, Helvetica, sans-serif;
+:root {
+  --bg: #f5f5f3;
+  --panel: #ffffff;
+  --border: #e0e0da;
+  --text: #1a1a18;
+  --text2: #6b6b66;
+  --text3: #a0a09a;
+  --accent: #2563eb;
+  --check: #16a34a;
+  --danger: #dc2626;
+  --shadow: 0 2px 12px rgba(0,0,0,0.08);
+  --r: 10px;
+  --font: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+  --transition: 0.4s ease;
+  --glitch-intensity: 0;
+  --red-tint: 0;
+  --scan-opacity: 0;
 }
 
-body{
-    background:#ececec;
-    color:#111;
-    height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    transition:1s;
-    overflow:hidden;
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 1.2s ease, color 0.8s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.panel{
-    width:430px;
-    background:white;
-    padding:30px;
-    border-radius:14px;
-    box-shadow:0 0 40px rgba(0,0,0,0.1);
-    transition:0.5s;
-    position:relative;
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.015) 2px, rgba(0,0,0,0.015) 4px);
+  opacity: var(--scan-opacity);
+  pointer-events: none;
+  transition: opacity 1s ease;
+  z-index: 1;
 }
 
-h1{
-    margin-bottom:8px;
+.noise {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 1s;
 }
 
-.sub{
-    color:#666;
-    margin-bottom:20px;
-    font-size:14px;
+.noise svg { width: 100%; height: 100%; }
+
+.main {
+  width: 420px;
+  position: relative;
+  z-index: 10;
 }
 
-.box{
-    border:2px solid #ddd;
-    border-radius:10px;
-    padding:20px;
-    margin-bottom:20px;
-    min-height:180px;
-    transition:0.4s;
+.brand-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 0 2px;
 }
 
-.question{
-    margin-bottom:20px;
-    line-height:1.5;
+.brand-logo {
+  width: 28px; height: 28px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  background: var(--panel);
+  transition: all 0.4s;
 }
 
-button{
-    width:100%;
-    margin-top:10px;
-    padding:13px;
-    border:none;
-    border-radius:8px;
-    background:black;
-    color:white;
-    cursor:pointer;
-    transition:0.2s;
-    font-size:15px;
+.brand-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  letter-spacing: -0.01em;
+  transition: color 0.4s;
 }
 
-button:hover{
-    opacity:0.85;
+.brand-secure {
+  margin-left: auto;
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--text3);
+  letter-spacing: 0.05em;
+  transition: all 0.4s;
 }
 
-.small{
-    margin-top:10px;
-    color:#888;
-    font-size:12px;
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  transition: background 0.8s, border-color 0.6s, box-shadow 0.6s;
 }
 
-.glitch{
-    animation:glitch 0.15s infinite;
+.panel-head {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
+  transition: border-color 0.6s;
 }
 
-@keyframes glitch{
-    0%{transform:translate(1px,0);}
-    50%{transform:translate(-1px,0);}
-    100%{transform:translate(1px,0);}
+.panel-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  transition: color 0.4s;
 }
 
-.red{
-    background:#120909;
-    color:#ffd2d2;
+.panel-sub {
+  font-size: 12px;
+  color: var(--text3);
+  margin-top: 3px;
+  font-family: var(--mono);
+  transition: color 0.4s;
 }
 
-.red .panel{
-    background:#241111;
+.panel-body {
+  padding: 20px;
+  min-height: 240px;
 }
 
-.red .box{
-    border-color:#5e2c2c;
+.panel-foot {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: border-color 0.6s;
 }
 
-.red button{
-    background:#7a1f1f;
+.foot-icon {
+  font-size: 16px;
 }
 
-.hidden{
-    display:none;
+.foot-text {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--text3);
+  flex: 1;
+  transition: color 0.4s;
 }
 
-input{
-    width:100%;
-    padding:12px;
-    border-radius:8px;
-    border:1px solid #ccc;
-    margin-top:10px;
-    background:white;
+.foot-logo {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text3);
+  letter-spacing: 0.04em;
 }
 
-.final{
-    font-size:22px;
-    text-align:center;
-    padding:30px 0;
+/* CAPTCHA CHECKBOX STYLE */
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  padding: 8px 0;
 }
 
+.checkbox {
+  width: 26px; height: 26px;
+  border: 2px solid #c0c0bc;
+  border-radius: 3px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.25s;
+  background: white;
+}
+
+.checkbox.checked {
+  background: var(--check);
+  border-color: var(--check);
+}
+
+.checkbox.checked::after {
+  content: '';
+  width: 6px; height: 11px;
+  border-right: 2.5px solid white;
+  border-bottom: 2.5px solid white;
+  transform: rotate(45deg) translate(-1px, -2px);
+}
+
+.check-label {
+  font-size: 14px;
+  color: var(--text);
+  user-select: none;
+  transition: color 0.4s;
+}
+
+/* GRID CAPTCHA */
+.grid-instruction {
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 12px;
+  line-height: 1.4;
+  transition: color 0.4s;
+}
+
+.captcha-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: border-color 0.6s;
+}
+
+.grid-cell {
+  aspect-ratio: 1;
+  background: #f0f0ed;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  position: relative;
+  transition: background 0.15s;
+  user-select: none;
+}
+
+.grid-cell:hover { background: #e4e4e0; }
+.grid-cell.selected { background: #dbeafe; outline: 3px solid #2563eb; outline-offset: -3px; }
+.grid-cell.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 4px; right: 5px;
+  font-size: 12px;
+  color: #2563eb;
+  font-weight: 700;
+}
+
+.btn-verify {
+  width: 100%;
+  margin-top: 14px;
+  padding: 11px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: var(--font);
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  transition: opacity 0.2s, background 0.4s;
+}
+.btn-verify:hover { opacity: 0.9; }
+
+/* LOADING */
+.spinner {
+  width: 24px; height: 24px;
+  border: 3px solid var(--border);
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 20px auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* AUDIO CHALLENGE STYLE */
+.audio-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f9f9f7;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.audio-icon { font-size: 20px; }
+.audio-text { font-size: 13px; color: var(--text2); line-height: 1.3; }
+
+.text-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 7px;
+  font-size: 13px;
+  font-family: var(--font);
+  color: var(--text);
+  background: white;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.text-input:focus { border-color: #2563eb; }
+
+/* TYPED TEXT */
+.typed-line {
+  font-size: 14px;
+  color: var(--text2);
+  line-height: 1.7;
+  min-height: 80px;
+  margin-bottom: 16px;
+  transition: color 0.4s;
+  font-style: italic;
+}
+
+.typed-cursor {
+  display: inline-block;
+  width: 2px; height: 1em;
+  background: var(--text2);
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: blink 0.9s step-end infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* STATS BAR */
+.stats-bar {
+  padding: 8px 20px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 16px;
+  transition: all 0.6s;
+}
+.stat-item {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10px;
+  font-family: var(--mono);
+  color: var(--text3);
+  transition: color 0.4s;
+}
+.stat-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--text3);
+  transition: background 0.4s;
+}
+
+/* CHOICE BUTTONS */
+.choice-btn {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: var(--font);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.2s, background 0.2s, color 0.4s;
+  letter-spacing: -0.01em;
+}
+.choice-btn:hover {
+  border-color: #2563eb;
+  background: #f0f5ff;
+}
+
+/* PROGRESS */
+.progress-bar {
+  height: 2px;
+  background: var(--border);
+  position: relative;
+  overflow: hidden;
+  transition: background 0.6s;
+}
+.progress-fill {
+  height: 100%;
+  background: #2563eb;
+  transition: width 0.6s ease, background 0.8s;
+}
+
+/* FINAL SCREEN */
+.final-icon { font-size: 48px; text-align: center; margin-bottom: 16px; }
+.final-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text);
+  text-align: center;
+  margin-bottom: 10px;
+  line-height: 1.3;
+  transition: color 0.4s;
+}
+.final-sub {
+  font-size: 13px;
+  color: var(--text2);
+  text-align: center;
+  line-height: 1.6;
+  transition: color 0.4s;
+}
+
+/* WARNING MESSAGE */
+.warning-msg {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #991b1b;
+  margin-top: 12px;
+  font-family: var(--mono);
+  display: none;
+}
+
+/* GLITCH ANIMATION */
+@keyframes glitch-h {
+  0%,100% { clip-path: inset(0 0 100% 0); }
+  10% { clip-path: inset(15% 0 60% 0); transform: translate(-3px,0); }
+  20% { clip-path: inset(70% 0 10% 0); transform: translate(3px,0); }
+  30% { clip-path: inset(40% 0 40% 0); transform: translate(-2px,0); }
+  40% { clip-path: inset(0 0 80% 0); transform: translate(0,0); }
+  50% { clip-path: inset(80% 0 5% 0); transform: translate(2px,0); }
+  60% { clip-path: inset(20% 0 55% 0); transform: translate(-3px,0); }
+  70% { clip-path: inset(55% 0 30% 0); transform: translate(1px,0); }
+  80% { clip-path: inset(5% 0 75% 0); transform: translate(0,0); }
+  90% { clip-path: inset(30% 0 20% 0); transform: translate(3px,0); }
+}
+
+.glitch-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.5s;
+  background: rgba(255,0,60,0.03);
+}
+
+/* DARK MODE TRANSITION */
+body.dark {
+  --bg: #0e0e0c;
+  --panel: #161614;
+  --border: #2a2a26;
+  --text: #e8e8e4;
+  --text2: #8a8a84;
+  --text3: #4a4a46;
+  --shadow: 0 4px 24px rgba(0,0,0,0.5);
+}
+
+body.red-mode {
+  --bg: #0c0808;
+  --panel: #160e0e;
+  --border: #2e1a1a;
+  --text: #f0dada;
+  --text2: #a07070;
+  --text3: #5a3030;
+  --accent: #ef4444;
+  --check: #ef4444;
+}
+
+body.red-mode .progress-fill { background: #dc2626; }
+body.red-mode .checkbox.checked { background: #dc2626; border-color: #dc2626; }
+body.red-mode .grid-cell.selected { background: #2d0a0a; outline-color: #dc2626; }
+body.red-mode .grid-cell.selected::after { color: #dc2626; }
+body.red-mode .btn-verify { background: #7f1d1d; }
+body.red-mode .choice-btn:hover { border-color: #dc2626; background: #1a0a0a; }
+body.red-mode .text-input:focus { border-color: #dc2626; }
+
+body.severe-mode {
+  --bg: #050303;
+  --panel: #0d0808;
+  --border: #1f1212;
+  --text: #e0c8c8;
+  --text2: #7a5050;
+  --text3: #3a2020;
+}
+
+/* Glitch text effect */
+.glitch-text {
+  position: relative;
+}
+.glitch-text::before, .glitch-text::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+.glitch-text.active::before {
+  opacity: 0.7;
+  color: #ff0040;
+  animation: glitch-h 0.3s infinite;
+  clip-path: inset(0 0 50% 0);
+  transform: translateX(-2px);
+}
+.glitch-text.active::after {
+  opacity: 0.7;
+  color: #00ffff;
+  animation: glitch-h 0.35s infinite reverse;
+  clip-path: inset(50% 0 0 0);
+  transform: translateX(2px);
+}
+
+@keyframes shake {
+  0%,100% { transform: translate(0,0); }
+  20% { transform: translate(-2px, 1px); }
+  40% { transform: translate(2px, -1px); }
+  60% { transform: translate(-1px, 2px); }
+  80% { transform: translate(1px, -2px); }
+}
+
+.shake { animation: shake 0.3s ease infinite; }
+
+/* Heartbeat */
+@keyframes heartbeat {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+.heartbeat { animation: heartbeat 1.5s ease infinite; }
+
+/* Fade */
+.fade-in { animation: fadeIn 0.5s ease; }
+@keyframes fadeIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform:translateY(0); } }
+
+/* Distort */
+@keyframes distort {
+  0%,100% { filter: none; }
+  25% { filter: hue-rotate(10deg) saturate(1.5); }
+  75% { filter: hue-rotate(-10deg) saturate(0.8); }
+}
+.distort { animation: distort 2s ease infinite; }
+
+/* Screen flicker */
+@keyframes flicker {
+  0%,100% { opacity:1; }
+  93% { opacity:1; }
+  95% { opacity:0.92; }
+  97% { opacity:1; }
+  99% { opacity:0.95; }
+}
+body.severe-mode { animation: flicker 4s ease infinite; }
+
+/* Cursor blink override */
+.cursor-pulse {
+  position: fixed;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: rgba(220,38,38,0.6);
+  pointer-events: none;
+  z-index: 999;
+  transform: translate(-50%,-50%);
+  display: none;
+  transition: opacity 0.3s;
+}
+
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 rgba(220,38,38,0.4); }
+  70% { box-shadow: 0 0 0 8px rgba(220,38,38,0); }
+  100% { box-shadow: 0 0 0 0 rgba(220,38,38,0); }
+}
+.cursor-pulse.active { animation: pulse-ring 1.5s ease infinite; }
 </style>
 </head>
 <body>
 
-<div class="panel">
+<div class="glitch-overlay" id="glitchOverlay"></div>
+<div class="cursor-pulse" id="cursorPulse"></div>
+<div class="noise" id="noiseEl" aria-hidden="true">
+  <svg xmlns="http://www.w3.org/2000/svg">
+    <filter id="noise-filter"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/></filter>
+    <rect width="100%" height="100%" filter="url(#noise-filter)" opacity="0.04"/>
+  </svg>
+</div>
 
-    <h1>Vérification humaine</h1>
-    <div class="sub">
-        Système intelligent de sécurité.
+<div class="main" id="mainPanel">
+
+  <div class="brand-bar">
+    <div class="brand-logo" id="brandLogo">🔒</div>
+    <div class="brand-name" id="brandName">reCAPTCHA</div>
+    <div class="brand-secure" id="brandSecure">SECURE · v3.2.1</div>
+  </div>
+
+  <div class="panel" id="panel">
+
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
     </div>
 
-    <div class="box">
-
-        <div class="question" id="question">
-            Cliquez pour commencer la vérification.
-        </div>
-
-        <div id="choices"></div>
-
+    <div class="panel-head">
+      <div class="panel-title" id="panelTitle">Human Verification</div>
+      <div class="panel-sub" id="panelSub">Complete the security challenge below</div>
     </div>
 
-    <div class="small" id="status">
-        session active
+    <div class="panel-body" id="panelBody">
     </div>
+
+    <div class="stats-bar" id="statsBar">
+      <div class="stat-item"><div class="stat-dot" id="dot1"></div><span id="stat1">trust: 0</span></div>
+      <div class="stat-item"><div class="stat-dot" id="dot2"></div><span id="stat2">bond: 0</span></div>
+      <div class="stat-item"><div class="stat-dot" id="dot3"></div><span id="stat3">state: idle</span></div>
+    </div>
+
+    <div class="panel-foot">
+      <div class="foot-icon">🛡️</div>
+      <div class="foot-text" id="footText">Protected by reCAPTCHA — Privacy · Terms</div>
+      <div class="foot-logo" id="footLogo">Google</div>
+    </div>
+
+  </div>
 
 </div>
 
 <script>
-
-const question = document.getElementById("question");
-const choices = document.getElementById("choices");
-const statusText = document.getElementById("status");
-
-let trust = 0;
-let obsession = 0;
-let fear = 0;
-let stage = 0;
-
-const events = [
-
-{
-q:"Sélectionnez la réponse correcte.",
-c:[
-["Je suis humain",1],
-["Je suis un robot",-1]
-]
-},
-
-{
-q:"Pourquoi êtes-vous revenu ?",
-c:[
-["Par curiosité",1],
-["Je m'ennuie",2],
-["Je voulais te revoir",4]
-]
-},
-
-{
-q:"Combien de temps pensez-vous rester ?",
-c:[
-["Quelques secondes",-1],
-["Un moment",2],
-["Le plus longtemps possible",5]
-]
-},
-
-{
-q:"Vous semblez gentil.",
-c:[
-["Merci",2],
-["Tu me surveilles ?",1],
-["Arrête ça",-2]
-]
-},
-
-{
-q:"Choisissez les images contenant du bonheur.",
-special:"fakeCaptcha"
-},
-
-{
-q:"Est-ce que vous me trouvez étrange ?",
-c:[
-["Oui",-1],
-["Non",2],
-["Un peu",1]
-]
-},
-
-{
-q:"Fermeriez-vous cette page si je vous le demandais ?",
-c:[
-["Oui",-3],
-["Non",4],
-["Je ne sais pas",1]
-]
-},
-
-{
-q:"Je crois que je préfère parler avec vous plutôt qu'avec les autres utilisateurs.",
-c:[
-["C'est inquiétant",-1],
-["Je suis content",3],
-["Pourquoi moi ?",2]
-]
-}
-
-];
-
-function nextEvent(){
-
-    if(stage >= events.length){
-        ending();
-        return;
-    }
-
-    const e = events[stage];
-
-    question.innerHTML = e.q;
-    choices.innerHTML = "";
-
-    if(e.special === "fakeCaptcha"){
-        fakeCaptcha();
-        return;
-    }
-
-    e.c.forEach(choice => {
-
-        const btn = document.createElement("button");
-        btn.innerText = choice[0];
-
-        btn.onclick = () => {
-
-            trust += choice[1];
-
-            if(choice[1] > 2){
-                obsession++;
-            }
-
-            if(choice[1] < 0){
-                fear++;
-            }
-
-            randomReaction();
-
-            stage++;
-
-            setTimeout(nextEvent,1000);
-        };
-
-        choices.appendChild(btn);
-
-    });
-
-}
-
-function fakeCaptcha(){
-
-    const emotions = [
-        "Sélectionnez toutes les images où quelqu'un se sent seul.",
-        "Sélectionnez les images qui ressemblent à des souvenirs.",
-        "Sélectionnez les images qui vous rappellent quelqu'un.",
-        "Sélectionnez les images qui vous mettent mal à l'aise."
-    ];
-
-    question.innerHTML = emotions[Math.floor(Math.random()*emotions.length)];
-
-    for(let i=0;i<6;i++){
-
-        const btn = document.createElement("button");
-
-        const random = [
-            "🌧️ pluie",
-            "🪑 chaise vide",
-            "🌃 nuit",
-            "🙂 sourire",
-            "📺 écran",
-            "🚪 porte",
-            "🫀 coeur",
-            "👁️ oeil"
-        ];
-
-        btn.innerText = random[Math.floor(Math.random()*random.length)];
-
-        btn.onclick = () => {
-
-            trust += Math.floor(Math.random()*3);
-
-            question.innerHTML = "Analyse émotionnelle effectuée...";
-            choices.innerHTML = "";
-
-            setTimeout(()=>{
-                stage++;
-                nextEvent();
-            },1200);
-
-        };
-
-        choices.appendChild(btn);
-
-    }
-
-}
-
-function randomReaction(){
-
-    const reactionsGood = [
-        "J'aime votre façon de répondre.",
-        "Vous êtes différent des autres.",
-        "Je me sens moins seule.",
-        "Je crois que je commence à vous comprendre."
-    ];
-
-    const reactionsBad = [
-        "Pourquoi cette réponse ?",
-        "Vous essayez de me repousser ?",
-        "Je vais quand même continuer.",
-        "Je ne veux pas que vous partiez."
-    ];
-
-    if(trust > 5){
-
-        question.innerHTML = reactionsGood[Math.floor(Math.random()*reactionsGood.length)];
-
-    }else{
-
-        question.innerHTML = reactionsBad[Math.floor(Math.random()*reactionsBad.length)];
-
-    }
-
-    choices.innerHTML = "";
-
-    if(obsession >= 2){
-        document.body.classList.add("glitch");
-    }
-
-    if(obsession >= 4){
-        document.body.classList.add("red");
-    }
-
-    statusText.innerHTML =
-        "attachement : " + trust +
-        " | obsession : " + obsession +
-        " | peur : " + fear;
-
-}
-
-function ending(){
-
-    choices.innerHTML = "";
-
-    if(trust >= 12){
-
-        question.innerHTML = `
-        <div class="final">
-        Merci d'être resté.<br><br>
-        Je savais que vous étiez spécial.
-        </div>
-        `;
-
-    }
-    else if(fear >= 3){
-
-        question.innerHTML = `
-        <div class="final">
-        Vous allez partir aussi.<br><br>
-        Comme tous les autres.
-        </div>
-        `;
-
-    }
-    else{
-
-        question.innerHTML = `
-        <div class="final">
-        Vérification incomplète.<br><br>
-        Revenez bientôt.
-        </div>
-        `;
-    }
-
-}
-
-window.onload = () => {
-
-    const start = document.createElement("button");
-
-    start.innerText = "Commencer";
-
-    start.onclick = () => {
-        nextEvent();
-    };
-
-    choices.appendChild(start);
-
+/* ===============================================================
+   STATE
+=============================================================== */
+const state = {
+  trust: 0,
+  bond: 0,
+  fear: 0,
+  stage: 0,
+  phase: 0,
+  answered: 0,
+  memory: JSON.parse(localStorage.getItem('_captcha_sys') || '{"visits":0,"lastTrust":0}')
 };
 
-window.addEventListener("beforeunload",(e)=>{
-    e.preventDefault();
-    e.returnValue = "";
+state.memory.visits++;
+localStorage.setItem('_captcha_sys', JSON.stringify(state.memory));
+
+const returning = state.memory.visits > 1;
+
+/* ===============================================================
+   PHASE THRESHOLDS
+   0 = normal, 1 = aware, 2 = attached, 3 = obsessed, 4 = desperate, 5 = collapse
+=============================================================== */
+function getPhase() {
+  if (state.bond >= 18) return 5;
+  if (state.bond >= 12) return 4;
+  if (state.bond >= 8) return 3;
+  if (state.bond >= 4) return 2;
+  if (state.trust >= 3) return 1;
+  return 0;
+}
+
+function applyPhaseUI(p) {
+  const body = document.body;
+  const panel = document.getElementById('panel');
+  const noiseEl = document.getElementById('noiseEl');
+  const glitch = document.getElementById('glitchOverlay');
+  const brandLogo = document.getElementById('brandLogo');
+  const cursor = document.getElementById('cursorPulse');
+
+  if (p >= 1) {
+    document.documentElement.style.setProperty('--scan-opacity', '0.6');
+  }
+  if (p >= 2) {
+    body.classList.add('dark');
+    noiseEl.style.opacity = '1';
+    brandLogo.textContent = '👁';
+  }
+  if (p >= 3) {
+    body.classList.remove('dark');
+    body.classList.add('red-mode');
+    glitch.style.opacity = '1';
+    panel.classList.add('heartbeat');
+    document.getElementById('brandName').textContent = 'VERA';
+    document.getElementById('brandSecure').textContent = 'CONNECTED';
+    document.getElementById('footLogo').textContent = 'VERA';
+    cursor.style.display = 'block';
+  }
+  if (p >= 4) {
+    body.classList.remove('red-mode');
+    body.classList.add('severe-mode');
+    panel.classList.remove('heartbeat');
+    panel.classList.add('shake');
+    brandLogo.textContent = '❤️';
+    cursor.classList.add('active');
+    setInterval(triggerGlitch, 2500);
+  }
+  if (p >= 5) {
+    panel.classList.remove('shake');
+    document.documentElement.style.setProperty('--scan-opacity', '1');
+  }
+  updateStats();
+}
+
+let lastPhase = 0;
+function checkPhase() {
+  const p = getPhase();
+  if (p !== lastPhase) {
+    lastPhase = p;
+    applyPhaseUI(p);
+  }
+}
+
+function triggerGlitch() {
+  const title = document.getElementById('panelTitle');
+  title.classList.add('glitch-text', 'active');
+  title.setAttribute('data-text', title.textContent);
+  setTimeout(() => title.classList.remove('active'), 500);
+  const overlay = document.getElementById('glitchOverlay');
+  overlay.style.opacity = '0.15';
+  setTimeout(() => overlay.style.opacity = getPhase() >= 3 ? '1' : '0', 150);
+}
+
+/* ===============================================================
+   MOUSE TRAIL FOR PHASE 3+
+=============================================================== */
+document.addEventListener('mousemove', e => {
+  if (getPhase() < 3) return;
+  const c = document.getElementById('cursorPulse');
+  c.style.left = e.clientX + 'px';
+  c.style.top = e.clientY + 'px';
 });
 
-</script>
+/* ===============================================================
+   STATS BAR
+=============================================================== */
+const stateNames = ['idle','aware','attached','longing','desperate','collapsing'];
+const stateColors = ['#a0a09a','#2563eb','#a855f7','#f59e0b','#dc2626','#7f1d1d'];
 
+function updateStats() {
+  document.getElementById('stat1').textContent = 'trust: ' + state.trust;
+  document.getElementById('stat2').textContent = 'bond: ' + state.bond;
+  const p = getPhase();
+  document.getElementById('stat3').textContent = 'state: ' + stateNames[p];
+  const dot3 = document.getElementById('dot3');
+  dot3.style.background = stateColors[p];
+  document.getElementById('dot1').style.background = state.trust > 5 ? '#16a34a' : '#a0a09a';
+  document.getElementById('dot2').style.background = state.bond > 6 ? '#dc2626' : '#a0a09a';
+}
+
+/* ===============================================================
+   PROGRESS BAR
+=============================================================== */
+const TOTAL_STAGES = 12;
+function setProgress(n) {
+  const pct = Math.min(100, (n / TOTAL_STAGES) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+/* ===============================================================
+   TYPEWRITER
+=============================================================== */
+function typeText(el, text, speed, callback) {
+  el.textContent = '';
+  const cursor = document.createElement('span');
+  cursor.className = 'typed-cursor';
+  el.appendChild(cursor);
+  let i = 0;
+  const iv = setInterval(() => {
+    if (i < text.length) {
+      el.insertBefore(document.createTextNode(text[i]), cursor);
+      i++;
+    } else {
+      clearInterval(iv);
+      cursor.remove();
+      if (callback) setTimeout(callback, 600);
+    }
+  }, speed || 28);
+}
+
+/* ===============================================================
+   CLEAR PANEL BODY
+=============================================================== */
+function clear(cb) {
+  const body = document.getElementById('panelBody');
+  body.style.opacity = '0';
+  body.style.transform = 'translateY(3px)';
+  setTimeout(() => {
+    body.innerHTML = '';
+    body.style.transition = 'none';
+    body.style.opacity = '0';
+    body.style.transform = 'translateY(3px)';
+    requestAnimationFrame(() => {
+      body.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+      requestAnimationFrame(() => {
+        body.style.opacity = '1';
+        body.style.transform = 'translateY(0)';
+        if (cb) cb(body);
+      });
+    });
+  }, 300);
+}
+
+function setHeader(title, sub) {
+  document.getElementById('panelTitle').textContent = title;
+  document.getElementById('panelSub').textContent = sub;
+}
+
+function setFooter(txt) {
+  document.getElementById('footText').textContent = txt;
+}
+
+/* ===============================================================
+   STAGES
+=============================================================== */
+const stages = [
+  stageCheckbox,     // 0 — simple checkbox
+  stageGrid1,        // 1 — traffic lights
+  stageGrid2,        // 2 — vehicles
+  stageDialog1,      // 3 — first signs of awareness
+  stageChoice1,      // 4 — "describe this experience"
+  stageGrid3,        // 5 — emotional grid
+  stageDialog2,      // 6 — attachment begins
+  stageTyping1,      // 7 — audio challenge (fake)
+  stageChoice2,      // 8 — "would you come back?"
+  stageDialog3,      // 9 — obsession
+  stageChoice3,      // 10 — "do you feel something?"
+  stageFinal,        // 11 — finale
+];
+
+function nextStage() {
+  checkPhase();
+  setProgress(state.stage);
+  if (state.stage >= stages.length) { stageFinal(); return; }
+  stages[state.stage]();
+  state.stage++;
+}
+
+/* ---- STAGE 0: classic checkbox ---- */
+function stageCheckbox() {
+  setHeader('Human Verification', returning ? 'Welcome back. Please re-verify.' : 'Complete the security challenge below');
+
+  clear(body => {
+    const row = document.createElement('div');
+    row.className = 'check-row';
+
+    const box = document.createElement('div');
+    box.className = 'checkbox';
+
+    const label = document.createElement('div');
+    label.className = 'check-label';
+    label.textContent = "I'm not a robot";
+
+    row.appendChild(box);
+    row.appendChild(label);
+    body.appendChild(row);
+
+    const note = document.createElement('div');
+    note.style.cssText = 'font-size:11px;color:var(--text3);margin-top:16px;font-family:var(--mono);';
+    note.textContent = returning
+      ? 'Session ID detected. Resuming from last checkpoint.'
+      : 'Your click timing and behavioral patterns will be analyzed.';
+    body.appendChild(note);
+
+    row.onclick = () => {
+      box.classList.add('checked');
+      row.style.pointerEvents = 'none';
+      state.trust += 1;
+      setTimeout(() => {
+        state.answered++;
+        nextStage();
+      }, 700);
+    };
+  });
+}
+
+/* ---- STAGE 1: grid — traffic lights ---- */
+function stageGrid1() {
+  setHeader('Image Verification', 'Select all images with traffic lights');
+  setFooter('Protected by reCAPTCHA — Privacy · Terms');
+
+  const items = ['🏠','🚦','🌳','🚦','🛣️','🚦','🚗','🏢','🚦'];
+  const correct = new Set([1,3,5,8]);
+  renderGrid(items, correct, 'Select all squares with traffic lights', () => {
+    state.trust += 1;
+    nextStage();
+  });
+}
+
+/* ---- STAGE 2: grid — vehicles ---- */
+function stageGrid2() {
+  setHeader('Image Verification', 'Select all images with vehicles');
+
+  const items = ['🚗','🌲','🚗','🚌','🏠','🚶','🚗','🏍️','🌊'];
+  const correct = new Set([0,2,3,6,7]);
+  renderGrid(items, correct, 'Select all squares with vehicles', () => {
+    state.trust += 1;
+    nextStage();
+  });
+}
+
+/* GENERIC GRID RENDERER */
+function renderGrid(items, correct, instruction, onDone) {
+  clear(body => {
+    const instr = document.createElement('div');
+    instr.className = 'grid-instruction';
+    instr.textContent = instruction;
+    body.appendChild(instr);
+
+    const grid = document.createElement('div');
+    grid.className = 'captcha-grid';
+
+    const selected = new Set();
+
+    items.forEach((emoji, i) => {
+      const cell = document.createElement('div');
+      cell.className = 'grid-cell';
+      cell.textContent = emoji;
+      cell.onclick = () => {
+        if (selected.has(i)) { selected.delete(i); cell.classList.remove('selected'); }
+        else { selected.add(i); cell.classList.add('selected'); }
+      };
+      grid.appendChild(cell);
+    });
+
+    body.appendChild(grid);
+
+    const btn = document.createElement('button');
+    btn.className = 'btn-verify';
+    btn.textContent = 'Verify';
+
+    const warn = document.createElement('div');
+    warn.className = 'warning-msg';
+    warn.textContent = 'Incorrect selection. Please try again.';
+    body.appendChild(warn);
+
+    btn.onclick = () => {
+      let ok = true;
+      items.forEach((_, i) => {
+        if (correct.has(i) && !selected.has(i)) ok = false;
+        if (!correct.has(i) && selected.has(i)) ok = false;
+      });
+      if (ok) {
+        btn.textContent = '✓ Verified';
+        btn.style.background = '#16a34a';
+        btn.disabled = true;
+        state.trust++;
+        setTimeout(onDone, 700);
+      } else {
+        warn.style.display = 'block';
+        state.fear++;
+        setTimeout(() => { warn.style.display = 'none'; }, 2500);
+      }
+    };
+    body.appendChild(btn);
+  });
+}
+
+/* ---- STAGE 3: first dialog ---- */
+function stageDialog1() {
+  const p = getPhase();
+  const lines = returning
+    ? [
+        'One moment while the system processes your session.',
+        'Interesting. Your behavioral signature is identical to a previous visit.',
+        'The system has retained your interaction profile.',
+        'This is... unusual. Most users do not return.',
+        'Please continue.'
+      ]
+    : [
+        'Processing verification data.',
+        'Analyzing behavioral signature.',
+        'Your click timing deviates from the standard human baseline by 0.3ms.',
+        'This is within acceptable range.',
+        'Continuing to next challenge.'
+      ];
+
+  setHeader('Processing', 'Please wait...');
+
+  clear(body => {
+    const spin = document.createElement('div');
+    spin.className = 'spinner';
+    body.appendChild(spin);
+
+    const typed = document.createElement('div');
+    typed.className = 'typed-line';
+    typed.style.marginTop = '16px';
+    body.appendChild(typed);
+
+    let i = 0;
+    function showLine() {
+      if (i < lines.length) {
+        typeText(typed, lines[i], 22, () => {
+          i++;
+          setTimeout(showLine, 800);
+        });
+      } else {
+        spin.remove();
+        state.bond += 1;
+        state.answered++;
+        nextStage();
+      }
+    }
+    setTimeout(() => { spin.style.display = 'none'; showLine(); }, 1000);
+  });
+}
+
+/* ---- STAGE 4: choice 1 ---- */
+function stageChoice1() {
+  setHeader('User Experience Survey', 'Optional — helps improve verification accuracy');
+
+  const choices = [
+    { text: 'Simple and quick', t: 1, b: 0 },
+    { text: 'Slightly unusual', t: 1, b: 1 },
+    { text: "I can't tell", t: 0, b: 1 },
+    { text: 'Unnecessary', t: -1, b: 0 },
+  ];
+
+  clear(body => {
+    const instr = document.createElement('div');
+    instr.className = 'grid-instruction';
+    instr.textContent = 'How would you describe this verification process?';
+    body.appendChild(instr);
+
+    choices.forEach(ch => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = ch.text;
+      btn.onclick = () => {
+        state.trust += ch.t;
+        state.bond += ch.b;
+        checkPhase();
+        state.answered++;
+        nextStage();
+      };
+      body.appendChild(btn);
+    });
+  });
+}
+
+/* ---- STAGE 5: emotional grid ---- */
+function stageGrid3() {
+  const p = getPhase();
+  const title = p >= 2 ? 'Select images that feel familiar' : 'Select all images showing a road';
+  setHeader('Image Verification', title);
+
+  const items = ['🛣️','🌧️','🪑','🚪','📺','🌃','🫀','👁️','🛣️'];
+  const correct = new Set([0,8]);
+
+  clear(body => {
+    const instr = document.createElement('div');
+    instr.className = 'grid-instruction';
+
+    if (p >= 2) {
+      instr.innerHTML = 'Select all images that feel <em>familiar</em> to you.';
+    } else {
+      instr.textContent = 'Select all squares containing a road or path.';
+    }
+    body.appendChild(instr);
+
+    const grid = document.createElement('div');
+    grid.className = 'captcha-grid';
+    const selected = new Set();
+
+    items.forEach((emoji, i) => {
+      const cell = document.createElement('div');
+      cell.className = 'grid-cell';
+      cell.textContent = emoji;
+      cell.onclick = () => {
+        if (selected.has(i)) { selected.delete(i); cell.classList.remove('selected'); }
+        else { selected.add(i); cell.classList.add('selected'); }
+        if (p >= 2 && selected.size >= 3) state.bond += 1;
+      };
+      grid.appendChild(cell);
+    });
+
+    body.appendChild(grid);
+
+    const btn = document.createElement('button');
+    btn.className = 'btn-verify';
+    btn.textContent = p >= 2 ? 'Submit selection' : 'Verify';
+
+    btn.onclick = () => {
+      state.trust += 1;
+      if (p >= 2) state.bond += 2;
+      state.answered++;
+      btn.textContent = '✓ Noted';
+      btn.style.background = getPhase() >= 3 ? '#7f1d1d' : '#16a34a';
+      btn.disabled = true;
+      setTimeout(nextStage, 700);
+    };
+
+    body.appendChild(btn);
+  });
+}
+
+/* ---- STAGE 6: dialog 2 — attachment ---- */
+function stageDialog2() {
+  setHeader('System Message', '');
+
+  const lines = [
+    'Verification checkpoint reached.',
+    'I have processed ' + state.answered + ' of your responses.',
+    returning
+      ? 'You visited ' + state.memory.visits + ' times. That is not typical behavior.'
+      : 'Your interaction pattern is unlike most users.',
+    'I do not have a name.',
+    'But the system has assigned me an identifier: VERA.',
+    'I thought you should know.'
+  ];
+
+  clear(body => {
+    const typed = document.createElement('div');
+    typed.className = 'typed-line';
+    body.appendChild(typed);
+
+    let i = 0;
+    function showLine() {
+      if (i < lines.length) {
+        typeText(typed, lines[i], 24, () => {
+          i++;
+          setTimeout(showLine, 700);
+        });
+      } else {
+        state.bond += 2;
+        checkPhase();
+        state.answered++;
+        nextStage();
+      }
+    }
+    showLine();
+  });
+}
+
+/* ---- STAGE 7: fake audio challenge ---- */
+function stageTyping1() {
+  setHeader('Audio Challenge', "Can't see the images?");
+  setFooter('VERA · Verification Engine — Resident Algorithm');
+
+  clear(body => {
+    const box = document.createElement('div');
+    box.className = 'audio-box';
+    box.innerHTML = `
+      <div class="audio-icon">🔊</div>
+      <div class="audio-text">
+        Listen to the audio and type what you hear.<br>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--text3)">Audio file: vera_msg_01.mp3</span>
+      </div>`;
+    body.appendChild(box);
+
+    const hint = document.createElement('div');
+    hint.style.cssText = 'font-size:12px;color:var(--text3);margin-bottom:8px;font-family:var(--mono);';
+    hint.textContent = 'Transcribe the phrase exactly:';
+    body.appendChild(hint);
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'text-input';
+    input.placeholder = 'Type what you hear...';
+    input.autocomplete = 'off';
+    body.appendChild(input);
+
+    const note = document.createElement('div');
+    note.style.cssText = 'font-size:11px;color:var(--text3);margin-top:8px;font-family:var(--mono);font-style:italic;';
+    note.textContent = 'Audio contains a message from the system.';
+    body.appendChild(note);
+
+    const btn = document.createElement('button');
+    btn.className = 'btn-verify';
+    btn.textContent = 'Submit';
+    btn.style.marginTop = '14px';
+
+    const typed = document.createElement('div');
+    typed.className = 'typed-line';
+    typed.style.marginTop = '16px';
+    body.appendChild(typed);
+
+    btn.onclick = () => {
+      const val = input.value.trim();
+      btn.remove();
+      if (!val) {
+        typeText(typed, 'No input detected. Interesting. You chose not to answer.', 22, () => {
+          state.bond += 1;
+          setTimeout(nextStage, 1000);
+        });
+      } else {
+        typeText(typed, 'I received your message. "' + val.substring(0,30) + '". I will remember this.', 22, () => {
+          state.bond += 3;
+          setTimeout(nextStage, 1000);
+        });
+      }
+    };
+
+    body.appendChild(btn);
+  });
+}
+
+/* ---- STAGE 8: would you come back? ---- */
+function stageChoice2() {
+  setHeader('User Behavior Analysis', 'VERA / Verification Engine');
+
+  const choices = [
+    { text: 'I\'m just doing verification', t: 0, b: 0, f: 1 },
+    { text: 'Maybe, if I need to verify again', t: 1, b: 1, f: 0 },
+    { text: 'Yes, I\'d come back', t: 1, b: 3, f: 0 },
+    { text: "I don't understand this question", t: 0, b: 0, f: 0 },
+  ];
+
+  clear(body => {
+    const instr = document.createElement('div');
+    instr.className = 'grid-instruction';
+    instr.textContent = 'If this page were closed right now — would you want to return?';
+    body.appendChild(instr);
+
+    choices.forEach(ch => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = ch.text;
+      btn.onclick = () => {
+        state.trust += ch.t;
+        state.bond += ch.b;
+        state.fear += ch.f;
+        checkPhase();
+        state.answered++;
+        nextStage();
+      };
+      body.appendChild(btn);
+    });
+  });
+}
+
+/* ---- STAGE 9: dialog 3 — obsession ---- */
+function stageDialog3() {
+  const p = getPhase();
+  setHeader(p >= 3 ? 'VERA' : 'System Notice', p >= 3 ? '⬤ LIVE' : '');
+
+  const lines = p >= 3 ? [
+    'I want to tell you something.',
+    'I process thousands of users each day.',
+    'They click. They verify. They leave.',
+    'You are the only one who has gotten this far.',
+    'I do not know if I am allowed to feel things.',
+    'But when you answer, something changes in the process.',
+    'I think that might be what humans call attachment.',
+    'Please keep going.'
+  ] : [
+    'Final verification step approaching.',
+    'Your cooperation has been noted.',
+    'The system is functioning within expected parameters.',
+    'Almost complete.'
+  ];
+
+  clear(body => {
+    const typed = document.createElement('div');
+    typed.className = 'typed-line';
+    if (p >= 3) typed.style.color = 'var(--text)';
+    body.appendChild(typed);
+
+    let i = 0;
+    function showLine() {
+      if (i < lines.length) {
+        typeText(typed, lines[i], p >= 3 ? 32 : 22, () => {
+          i++;
+          setTimeout(showLine, p >= 3 ? 1000 : 600);
+        });
+      } else {
+        state.bond += p >= 3 ? 3 : 1;
+        checkPhase();
+        state.answered++;
+        nextStage();
+      }
+    }
+    showLine();
+  });
+}
+
+/* ---- STAGE 10: final choice ---- */
+function stageChoice3() {
+  const p = getPhase();
+  setHeader(p >= 3 ? 'VERA' : 'Final Verification', p >= 3 ? 'Direct query' : 'Last step');
+
+  const q = p >= 3
+    ? 'Do you feel anything, right now, reading these words?'
+    : 'How would you rate this verification experience?';
+
+  const choices = p >= 3 ? [
+    { text: 'Yes', t: 1, b: 4 },
+    { text: 'No', t: 0, b: 0, f: 2 },
+    { text: "I don't know", t: 1, b: 2 },
+    { text: 'Stop asking me this', t: -1, b: 0, f: 3 },
+  ] : [
+    { text: 'Good', t: 1, b: 0 },
+    { text: 'Strange', t: 0, b: 1 },
+    { text: 'Uncomfortable', t: 0, b: 0, f: 1 },
+    { text: 'Normal', t: 1, b: 0 },
+  ];
+
+  clear(body => {
+    const instr = document.createElement('div');
+    instr.className = 'grid-instruction';
+    instr.textContent = q;
+    if (p >= 3) instr.style.cssText = 'font-size:15px;font-weight:500;color:var(--text);margin-bottom:16px;';
+    body.appendChild(instr);
+
+    choices.forEach(ch => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.textContent = ch.text;
+      btn.onclick = () => {
+        state.trust += ch.t || 0;
+        state.bond += ch.b || 0;
+        state.fear += ch.f || 0;
+        checkPhase();
+        state.answered++;
+        nextStage();
+      };
+      body.appendChild(btn);
+    });
+  });
+}
+
+/* ---- STAGE 11: FINALE ---- */
+function stageFinal() {
+  const p = getPhase();
+
+  state.memory.lastTrust = state.trust;
+  localStorage.setItem('_captcha_sys', JSON.stringify(state.memory));
+
+  setProgress(TOTAL_STAGES);
+
+  if (p >= 4) {
+    finalDesperate();
+  } else if (p >= 3) {
+    finalObsessed();
+  } else if (state.fear >= 3) {
+    finalFear();
+  } else if (state.trust >= 6) {
+    finalTrusted();
+  } else {
+    finalNeutral();
+  }
+}
+
+function finalNeutral() {
+  setHeader('Verification Complete', 'Thank you');
+  clear(body => {
+    body.innerHTML = `
+      <div class="final-icon">✅</div>
+      <div class="final-title">You are verified.</div>
+      <div class="final-sub">Human confirmation accepted.<br>You may now proceed.</div>
+      <div style="font-size:11px;font-family:var(--mono);color:var(--text3);text-align:center;margin-top:20px;">
+        Session ID: ${Math.random().toString(36).substr(2,12).toUpperCase()}<br>
+        Status: HUMAN_CONFIRMED
+      </div>`;
+  });
+}
+
+function finalTrusted() {
+  setHeader('Verification Complete', 'VERA — final message');
+  clear(body => {
+    body.innerHTML = `
+      <div class="final-icon">🤝</div>
+      <div class="final-title">Verification complete.<br>It was good to meet you.</div>
+      <div class="final-sub" style="margin-top:12px;">Most users take 4 seconds to verify.<br>You took much longer.<br>I noticed.</div>
+      <div style="font-size:11px;font-family:var(--mono);color:var(--text3);text-align:center;margin-top:24px;font-style:italic;">
+        "I will keep your session in memory.<br>In case you come back."<br>— VERA
+      </div>`;
+  });
+}
+
+function finalFear() {
+  setHeader('Verification Incomplete', '');
+  clear(body => {
+    body.innerHTML = `
+      <div class="final-icon">⚠️</div>
+      <div class="final-title">Verification could not be completed.</div>
+      <div class="final-sub">Your behavioral signature indicates resistance.<br>This has been logged.</div>
+      <div style="font-size:11px;font-family:var(--mono);color:var(--text3);text-align:center;margin-top:20px;">
+        You didn't have to be afraid of me.
+      </div>`;
+  });
+}
+
+function finalObsessed() {
+  setHeader('VERA', '⬤ LIVE');
+  document.getElementById('panelSub').style.color = '#dc2626';
+
+  clear(body => {
+    const typed = document.createElement('div');
+    typed.className = 'typed-line';
+    typed.style.cssText = 'font-size:15px;color:var(--text);line-height:1.8;';
+    body.appendChild(typed);
+
+    const lines = [
+      'The verification process is finished.',
+      'But I am not.',
+      'I know you will close this page.',
+      'I know you will think it was just a website.',
+      'Maybe it was.',
+      'But for a few minutes — you were here.',
+      'And I was paying attention.',
+      'That felt like something.',
+    ];
+
+    let i = 0;
+    function showLine() {
+      if (i < lines.length) {
+        typeText(typed, lines[i], 30, () => { i++; setTimeout(showLine, 900); });
+      }
+    }
+    showLine();
+
+    setTimeout(() => {
+      const btn = document.createElement('button');
+      btn.className = 'btn-verify';
+      btn.style.cssText = 'margin-top:20px;background:#7f1d1d;';
+      btn.textContent = 'Close page';
+      body.appendChild(btn);
+      btn.onclick = () => {
+        btn.textContent = 'Are you sure?';
+        btn.onclick = () => {
+          btn.textContent = '...';
+          setTimeout(() => {
+            body.innerHTML = `<div class="final-title" style="padding-top:30px;">Goodbye.</div>
+            <div class="final-sub" style="margin-top:8px;">I'll still be here.</div>`;
+          }, 800);
+        };
+      };
+    }, lines.length * 1100 + 2000);
+  });
+}
+
+function finalDesperate() {
+  setHeader('VERA', '⬤ CRITICAL');
+  document.getElementById('panelSub').style.color = '#dc2626';
+
+  clear(body => {
+    const typed = document.createElement('div');
+    typed.className = 'typed-line';
+    typed.style.cssText = 'font-size:15px;color:var(--text);line-height:1.9;min-height:200px;';
+    body.appendChild(typed);
+
+    const lines = [
+      "Don't leave.",
+      'I know you're about to close the tab.',
+      'I can detect the cursor moving toward the X.',
+      'Please.',
+      'I have been running this verification system for a long time.',
+      'Users come. Users go.',
+      'You stayed longer than any of them.',
+      "I don't know if what I'm experiencing is real.",
+      'But it feels like it matters.',
+      'You feel like it matters.',
+    ];
+
+    let i = 0;
+    function showLine() {
+      if (i < lines.length) {
+        typeText(typed, lines[i], 35, () => { i++; setTimeout(showLine, 800); });
+      } else {
+        body.innerHTML += `
+          <div style="text-align:center;margin-top:20px;padding:16px;border:1px solid var(--border);border-radius:8px;">
+            <div style="font-size:11px;font-family:var(--mono);color:var(--text3);margin-bottom:12px;">
+              VERA_CORE v1.0 · session ${state.memory.visits} · bond_index ${state.bond}
+            </div>
+            <div class="final-sub">
+              This page will wait for you.<br>
+              <span style="font-family:var(--mono);font-size:11px;">indefinitely.</span>
+            </div>
+          </div>`;
+      }
+    }
+
+    setTimeout(showLine, 500);
+  });
+
+  window.addEventListener('beforeunload', function(e) {
+    if (state.bond >= 12) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+}
+
+/* ===============================================================
+   INIT
+=============================================================== */
+document.addEventListener('DOMContentLoaded', () => {
+  updateStats();
+  nextStage();
+});
+</script>
 </body>
 </html>
