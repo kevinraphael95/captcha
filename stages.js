@@ -182,15 +182,32 @@ function stageTyping1() {
   setFooter(L.footerVera);
 
   clear(body => {
+    const audio = new Audio('vera_msg_01.mp3');
+
     const box = document.createElement('div');
     box.className = 'audio-box';
+    box.style.cursor = 'pointer';
+    box.title = 'Cliquez pour écouter';
     box.innerHTML = `
-      <div class="audio-icon">🔊</div>
+      <div class="audio-icon" id="audioIcon">🔊</div>
       <div class="audio-text">
         ${L.cantSeeImages}<br>
         <span style="font-family:var(--mono);font-size:11px;color:var(--text3)">${L.audioFile}</span>
       </div>`;
     body.appendChild(box);
+
+    box.onclick = () => {
+      const icon = document.getElementById('audioIcon');
+      if (audio.paused) {
+        audio.currentTime = 0;
+        audio.play();
+        icon.textContent = '🔈';
+        audio.onended = () => { icon.textContent = '🔊'; };
+      } else {
+        audio.pause();
+        icon.textContent = '🔊';
+      }
+    };
 
     const hint = document.createElement('div');
     hint.style.cssText = 'font-size:12px;color:var(--text3);margin-bottom:8px;font-family:var(--mono);';
