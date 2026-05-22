@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>reCAPTCHA — Human Verification</title>
+  <title>reCAPTCHA — Vérification humaine</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
@@ -11,7 +11,7 @@
 <body>
 
   <div class="glitch-overlay" id="glitchOverlay"></div>
-  <div class="cursor-pulse" id="cursorPulse"></div>
+  <div class="cursor-pulse"   id="cursorPulse"></div>
 
   <div class="noise" id="noiseEl" aria-hidden="true">
     <svg xmlns="http://www.w3.org/2000/svg">
@@ -25,9 +25,9 @@
   <div class="main" id="mainPanel">
 
     <div class="brand-bar">
-      <div class="brand-logo" id="brandLogo">🔒</div>
-      <div class="brand-name" id="brandName">reCAPTCHA</div>
-      <div class="brand-secure" id="brandSecure">SECURE · v3.2.1</div>
+      <div class="brand-logo"   id="brandLogo">🔒</div>
+      <div class="brand-name"   id="brandName">reCAPTCHA</div>
+      <div class="brand-secure" id="brandSecure">SÉCURISÉ · v3.2.1</div>
     </div>
 
     <div class="panel" id="panel">
@@ -37,30 +37,21 @@
       </div>
 
       <div class="panel-head">
-        <div class="panel-title" id="panelTitle">Human Verification</div>
-        <div class="panel-sub" id="panelSub">Complete the security challenge below</div>
+        <div class="panel-title" id="panelTitle">Vérification humaine</div>
+        <div class="panel-sub"   id="panelSub">Complétez le défi de sécurité ci-dessous</div>
       </div>
 
       <div class="panel-body" id="panelBody"></div>
 
       <div class="stats-bar" id="statsBar">
-        <div class="stat-item">
-          <div class="stat-dot" id="dot1"></div>
-          <span id="stat1">trust: 0</span>
-        </div>
-        <div class="stat-item">
-          <div class="stat-dot" id="dot2"></div>
-          <span id="stat2">bond: 0</span>
-        </div>
-        <div class="stat-item">
-          <div class="stat-dot" id="dot3"></div>
-          <span id="stat3">state: idle</span>
-        </div>
+        <div class="stat-item"><div class="stat-dot" id="dot1"></div><span id="stat1">trust: 0</span></div>
+        <div class="stat-item"><div class="stat-dot" id="dot2"></div><span id="stat2">bond: 0</span></div>
+        <div class="stat-item"><div class="stat-dot" id="dot3"></div><span id="stat3">état: inactif</span></div>
       </div>
 
       <div class="panel-foot">
         <div class="foot-icon">🛡️</div>
-        <div class="foot-text" id="footText">Protected by reCAPTCHA — Privacy · Terms</div>
+        <div class="foot-text" id="footText">Protégé par reCAPTCHA — Confidentialité · CGU</div>
         <div class="foot-logo" id="footLogo">Google</div>
       </div>
 
@@ -71,5 +62,6 @@
   <script src="engine.js"></script>
   <script src="stages.js"></script>
   <script src="main.js"></script>
+
 </body>
 </html>
