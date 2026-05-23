@@ -1,1 +1,1 @@
-https://kevinraphael95.github.io/captcha/captcha.html
+https://kevinraphael95.github.io/captcha/index.html
